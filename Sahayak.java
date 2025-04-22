@@ -1,6 +1,4 @@
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -183,16 +181,11 @@ class ServiceProviderManager {
 
 public class Sahayak extends JFrame {
     private ServiceProviderManager manager;
-    private JPanel mainPanel;
-    private JLabel titleLabel;
-    private Color[] buttonColors = {
-        new Color(52, 152, 219),   // Blue
-        new Color(46, 204, 113),   // Green
-        new Color(231, 76, 60),    // Red
-        new Color(241, 196, 15),   // Yellow
-        new Color(127, 140, 141),  // Gray
-        new Color(52, 152, 219)    // Cyan
-    };
+    private JPanel contentPanel; // Main content area
+    private CardLayout cardLayout;
+    private Color sidebarColor = new Color(44, 62, 80);
+    private Color headerColor = new Color(52, 152, 219);
+    private Color backgroundColor = new Color(245, 247, 250);
 
     public Sahayak() {
         try {
@@ -200,144 +193,341 @@ public class Sahayak extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         manager = new ServiceProviderManager();
-
         initializeUI();
     }
 
     private void initializeUI() {
-        setTitle("Sahayata - Service Providers Management");
-        setSize(800, 800);
+        setTitle("Sahayata - Service Providers Platform");
+        setSize(1100, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        // setIconImage(new ImageIcon(getClass().getResource("/icon.png")).getImage()); // Commented out to avoid null resource error
+        setLayout(new BorderLayout());
 
-        mainPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Gradient background
-                GradientPaint gradient = new GradientPaint(
-                    0, 0, new Color(240, 240, 250), 
-                    0, getHeight(), new Color(200, 220, 240)
-                );
-                g2d.setPaint(gradient);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-                
-                // Decorative elements
-                g2d.setColor(new Color(255, 255, 255, 30));
-                for (int i = 0; i < 20; i++) {
-                    int x = (int) (Math.random() * getWidth());
-                    int y = (int) (Math.random() * getHeight());
-                    int size = (int) (Math.random() * 50 + 20);
-                    g2d.fillOval(x, y, size, size);
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(headerColor);
+        header.setPreferredSize(new Dimension(1100, 60));
+        JLabel title = new JLabel("Sahayata Platform", JLabel.LEFT);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        title.setForeground(Color.WHITE);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
+        header.add(title, BorderLayout.WEST);
+        add(header, BorderLayout.NORTH);
+
+        // Sidebar
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(sidebarColor);
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setPreferredSize(new Dimension(220, 0));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
+
+        String[] navItems = {"Dashboard", "Add Provider", "Search by ID", "Search by Type", "Delete Provider", "View All", "Exit"};
+        for (String item : navItems) {
+            JButton btn = new JButton(item);
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btn.setMaximumSize(new Dimension(200, 45));
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            btn.setForeground(Color.WHITE);
+            btn.setBackground(sidebarColor);
+            btn.setFocusPainted(false);
+            btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    btn.setBackground(headerColor);
                 }
-                
-                g2d.dispose();
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    btn.setBackground(sidebarColor);
+                }
+            });
+            sidebar.add(btn);
+            sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
+            // Navigation actions
+            switch (item) {
+                case "Dashboard":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "dashboard"));
+                    break;
+                case "Add Provider":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "add"));
+                    break;
+                case "Search by ID":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "searchId"));
+                    break;
+                case "Search by Type":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "searchType"));
+                    break;
+                case "Delete Provider":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "delete"));
+                    break;
+                case "View All":
+                    btn.addActionListener(e -> cardLayout.show(contentPanel, "viewAll"));
+                    break;
+                case "Exit":
+                    btn.addActionListener(e -> System.exit(0));
+                    break;
             }
-        };
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
-
-        // Title with icon
-        JPanel titlePanel = new JPanel();
-        titlePanel.setOpaque(false);
-        titlePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0));
-        titlePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        // You would need to add an icon file to your project resources
-        // ImageIcon icon = new ImageIcon(getClass().getResource("/sahayak-icon.png"));
-        // JLabel iconLabel = new JLabel(icon);
-        // titlePanel.add(iconLabel);
-        
-        titleLabel = new JLabel("Sahayata Service Providers");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        titleLabel.setForeground(new Color(33, 47, 61));
-        titlePanel.add(titleLabel);
-        
-        mainPanel.add(titlePanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-
-        addButtons();
-        add(mainPanel);
-        
-        try {
-            setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 30, 30));
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        add(sidebar, BorderLayout.WEST);
+
+        // Main content area with CardLayout
+        cardLayout = new CardLayout();
+        contentPanel = new JPanel(cardLayout);
+        contentPanel.setBackground(backgroundColor);
+
+        // Add cards
+        contentPanel.add(createDashboardPanel(), "dashboard");
+        contentPanel.add(createAddProviderPanel(), "add");
+        contentPanel.add(createSearchByIdPanel(), "searchId");
+        contentPanel.add(createSearchByTypePanel(), "searchType");
+        contentPanel.add(createDeleteProviderPanel(), "delete");
+        contentPanel.add(createViewAllPanel(), "viewAll");
+
+        add(contentPanel, BorderLayout.CENTER);
+        cardLayout.show(contentPanel, "dashboard");
     }
 
-    private void addButtons() {
-        JButton addBtn = createStyledButton("Add New Sahayak", e -> addServiceProvider(), buttonColors[0]);
-        JButton searchIdBtn = createStyledButton("Search by Adhaar ID", e -> searchServiceProvider(), buttonColors[1]);
-        JButton searchTypeBtn = createStyledButton("Search by Service Type", e -> searchByServiceType(), buttonColors[5]);
-        JButton deleteBtn = createStyledButton("Delete Sahayak", e -> deleteServiceProvider(), buttonColors[2]);
-        JButton viewAllBtn = createStyledButton("View All Sahayaks", e -> viewServiceProviders(), buttonColors[3]);
-        JButton exitBtn = createStyledButton("Exit Application", e -> System.exit(0), buttonColors[4]);
-
-        JButton[] buttons = {addBtn, searchIdBtn, searchTypeBtn, deleteBtn, viewAllBtn, exitBtn};
-
-        for (JButton button : buttons) {
-            button.setAlignmentX(Component.CENTER_ALIGNMENT);
-            mainPanel.add(button);
-            mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        }
+    // Dashboard card
+    private JPanel createDashboardPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(backgroundColor);
+        panel.setLayout(new GridBagLayout());
+        JLabel welcome = new JLabel("Welcome to Sahayata Service Providers Platform");
+        welcome.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        welcome.setForeground(new Color(44, 62, 80));
+        panel.add(welcome);
+        return panel;
     }
 
-    private JButton createStyledButton(String text, ActionListener action, Color baseColor) {
-        JButton button = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Button gradient
-                GradientPaint gradient = new GradientPaint(
-                    0, 0, baseColor, 
-                    0, getHeight(), baseColor.darker()
+    // Add Provider card
+    private JPanel createAddProviderPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel title = new JLabel("Add New Service Provider");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        panel.add(title, gbc);
+        gbc.gridy++;
+        JPanel formPanel = new JPanel(new GridLayout(8, 2, 10, 10));
+        formPanel.setBackground(Color.WHITE);
+        JTextField idField = new JTextField();
+        JTextField nameField = new JTextField();
+        JTextField serviceTypeField = new JTextField();
+        JTextField hourlyRateField = new JTextField();
+        JTextField contactField = new JTextField();
+        JTextField emailField = new JTextField();
+        JTextField addressField = new JTextField();
+        JTextField skillsField = new JTextField();
+        formPanel.add(new JLabel("Adhaar ID:"));
+        formPanel.add(idField);
+        formPanel.add(new JLabel("Full Name:"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Service Type:"));
+        formPanel.add(serviceTypeField);
+        formPanel.add(new JLabel("Hourly Rate (₹):"));
+        formPanel.add(hourlyRateField);
+        formPanel.add(new JLabel("Contact Number:"));
+        formPanel.add(contactField);
+        formPanel.add(new JLabel("Email:"));
+        formPanel.add(emailField);
+        formPanel.add(new JLabel("Address:"));
+        formPanel.add(addressField);
+        formPanel.add(new JLabel("Skills:"));
+        formPanel.add(skillsField);
+        panel.add(formPanel, gbc);
+        gbc.gridy++;
+        JButton submitBtn = new JButton("Add Provider");
+        submitBtn.setBackground(headerColor);
+        submitBtn.setForeground(Color.WHITE);
+        submitBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        submitBtn.setFocusPainted(false);
+        submitBtn.addActionListener(e -> {
+            try {
+                ServiceProvider newSP = new ServiceProvider(
+                    Integer.parseInt(idField.getText()),
+                    nameField.getText(),
+                    serviceTypeField.getText(),
+                    Float.parseFloat(hourlyRateField.getText()),
+                    Long.parseLong(contactField.getText()),
+                    emailField.getText(),
+                    addressField.getText(),
+                    skillsField.getText()
                 );
-                
-                g2.setPaint(gradient);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                
-                // Border
-                g2.setColor(new Color(0, 0, 0, 50));
-                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20);
-                
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-
-        button.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        button.setForeground(Color.WHITE);
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(350, 60));
-        button.setMaximumSize(new Dimension(350, 60));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.addActionListener(action);
-
-        // Hover effects
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setForeground(new Color(255, 255, 255, 220));
-            }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setForeground(Color.WHITE);
+                if (validateServiceProvider(newSP)) {
+                    manager.addServiceProvider(newSP);
+                    JOptionPane.showMessageDialog(this, "Service provider added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    idField.setText(""); nameField.setText(""); serviceTypeField.setText(""); hourlyRateField.setText(""); contactField.setText(""); emailField.setText(""); addressField.setText(""); skillsField.setText("");
+                }
+            } catch (Exception ex) {
+                showErrorDialog("Input Error", "Please check your fields.");
             }
         });
+        panel.add(submitBtn, gbc);
+        return panel;
+    }
 
-        return button;
+    // Search by ID card
+    private JPanel createSearchByIdPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel title = new JLabel("Search Service Provider by Adhaar ID");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        panel.add(title, gbc);
+        gbc.gridy++;
+        JTextField idField = new JTextField(15);
+        panel.add(idField, gbc);
+        gbc.gridy++;
+        JButton searchBtn = new JButton("Search");
+        searchBtn.setBackground(headerColor);
+        searchBtn.setForeground(Color.WHITE);
+        searchBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        searchBtn.setFocusPainted(false);
+        panel.add(searchBtn, gbc);
+        searchBtn.addActionListener(e -> {
+            try {
+                int id = Integer.parseInt(idField.getText());
+                ServiceProvider sp = manager.searchServiceProvider(id);
+                if (sp != null) {
+                    showProviderDetails(sp);
+                } else {
+                    JOptionPane.showMessageDialog(this, "No service provider found with ID: " + id, "Not Found", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                showErrorDialog("Input Error", "Please enter a valid numeric ID.");
+            }
+        });
+        return panel;
+    }
+
+    // Search by Type card
+    private JPanel createSearchByTypePanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel title = new JLabel("Search Service Providers by Type");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        panel.add(title, gbc);
+        gbc.gridy++;
+        JTextField typeField = new JTextField(15);
+        panel.add(typeField, gbc);
+        gbc.gridy++;
+        JButton searchBtn = new JButton("Search");
+        searchBtn.setBackground(headerColor);
+        searchBtn.setForeground(Color.WHITE);
+        searchBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        searchBtn.setFocusPainted(false);
+        panel.add(searchBtn, gbc);
+        searchBtn.addActionListener(e -> {
+            try {
+                List<ServiceProvider> results = manager.searchByServiceType(typeField.getText());
+                if (!results.isEmpty()) {
+                    showSearchResults(results, typeField.getText());
+                } else {
+                    JOptionPane.showMessageDialog(this, "No service providers found for: " + typeField.getText(), "Search Results", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                showErrorDialog("Database Error", "Failed to search: " + ex.getMessage());
+            }
+        });
+        return panel;
+    }
+
+    // Delete Provider card
+    private JPanel createDeleteProviderPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel title = new JLabel("Delete Service Provider by Adhaar ID");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        panel.add(title, gbc);
+        gbc.gridy++;
+        JTextField idField = new JTextField(15);
+        panel.add(idField, gbc);
+        gbc.gridy++;
+        JButton deleteBtn = new JButton("Delete");
+        deleteBtn.setBackground(new Color(231, 76, 60));
+        deleteBtn.setForeground(Color.WHITE);
+        deleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        deleteBtn.setFocusPainted(false);
+        panel.add(deleteBtn, gbc);
+        deleteBtn.addActionListener(e -> {
+            try {
+                int id = Integer.parseInt(idField.getText());
+                boolean deleted = manager.deleteServiceProvider(id);
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this, "Service provider deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "No service provider found with ID: " + id, "Not Found", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                showErrorDialog("Input Error", "Please enter a valid numeric ID.");
+            }
+        });
+        return panel;
+    }
+
+    // View All Providers card
+    private JPanel createViewAllPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(backgroundColor);
+        JLabel title = new JLabel("All Service Providers", JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        panel.add(title, BorderLayout.NORTH);
+        JButton refreshBtn = new JButton("Refresh");
+        refreshBtn.setBackground(headerColor);
+        refreshBtn.setForeground(Color.WHITE);
+        refreshBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        refreshBtn.setFocusPainted(false);
+        panel.add(refreshBtn, BorderLayout.SOUTH);
+        JTable table = new JTable();
+        JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        refreshBtn.addActionListener(e -> loadAllProviders(table));
+        loadAllProviders(table);
+        return panel;
+    }
+
+    private void loadAllProviders(JTable table) {
+        try {
+            List<ServiceProvider> providers = manager.getAllServiceProviders();
+            String[] columnNames = {"ID", "Name", "Service Type", "Hourly Rate", "Contact", "Email", "Location"};
+            Object[][] data = new Object[providers.size()][columnNames.length];
+            for (int i = 0; i < providers.size(); i++) {
+                ServiceProvider sp = providers.get(i);
+                data[i] = new Object[]{
+                    sp.getId(),
+                    sp.getName(),
+                    sp.getServiceType(),
+                    String.format("₹%.2f", sp.getHourlyRate()),
+                    sp.getContactNo(),
+                    sp.getEmail(),
+                    sp.getAddress().length() > 30 ? sp.getAddress().substring(0, 30) + "..." : sp.getAddress()
+                };
+            }
+            table.setModel(new javax.swing.table.DefaultTableModel(data, columnNames) {
+                public boolean isCellEditable(int row, int column) { return false; }
+            });
+            table.setRowHeight(28);
+            table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        } catch (Exception ex) {
+            showErrorDialog("Database Error", "Failed to load providers: " + ex.getMessage());
+        }
     }
 
     private boolean validateServiceProvider(ServiceProvider sp) {
@@ -388,6 +578,153 @@ public class Sahayak extends JFrame {
         if (email == null || email.trim().isEmpty()) return false;
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
         return Pattern.matches(emailRegex, email);
+    }
+
+    private void showProviderDetails(ServiceProvider sp) {
+        JPanel detailsPanel = new JPanel(new BorderLayout(10, 10));
+        detailsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Header with icon and name
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        
+        JLabel nameLabel = new JLabel(sp.getName(), SwingConstants.CENTER);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        nameLabel.setForeground(new Color(33, 47, 61));
+        headerPanel.add(nameLabel, BorderLayout.CENTER);
+        
+        detailsPanel.add(headerPanel, BorderLayout.NORTH);
+
+        // Details in a formatted panel
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 220)),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        infoPanel.setBackground(new Color(240, 245, 250));
+
+        addDetailRow(infoPanel, "Adhaar ID:", String.valueOf(sp.getId()));
+        addDetailRow(infoPanel, "Service Type:", sp.getServiceType());
+        addDetailRow(infoPanel, "Hourly Rate:", String.format("₹%.2f", sp.getHourlyRate()));
+        addDetailRow(infoPanel, "Contact:", String.valueOf(sp.getContactNo()));
+        addDetailRow(infoPanel, "Email:", sp.getEmail());
+        addDetailRow(infoPanel, "Address:", sp.getAddress());
+        addDetailRow(infoPanel, "Skills:", sp.getSkills());
+
+        detailsPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(this, detailsPanel, 
+            "Service Provider Details", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private void addDetailRow(JPanel panel, String label, String value) {
+        JPanel rowPanel = new JPanel(new BorderLayout());
+        rowPanel.setOpaque(false);
+        rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+
+        JLabel labelComp = new JLabel(label);
+        labelComp.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        labelComp.setForeground(new Color(70, 70, 70));
+        labelComp.setPreferredSize(new Dimension(120, 20));
+
+        JTextArea valueComp = new JTextArea(value);
+        valueComp.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        valueComp.setEditable(false);
+        valueComp.setOpaque(false);
+        valueComp.setLineWrap(true);
+        valueComp.setWrapStyleWord(true);
+
+        rowPanel.add(labelComp, BorderLayout.WEST);
+        rowPanel.add(valueComp, BorderLayout.CENTER);
+        panel.add(rowPanel);
+    }
+
+    private void showSearchResults(List<ServiceProvider> results, String searchTerm) {
+        JDialog resultsDialog = new JDialog(this, "Search Results for: " + searchTerm, true);
+        resultsDialog.setSize(1200, 600);
+        resultsDialog.setLocationRelativeTo(this);
+
+        // Create table model
+        String[] columnNames = {"ID", "Name", "Service Type", "Hourly Rate", "Contact", "Email", "Location"};
+        Object[][] data = new Object[results.size()][columnNames.length];
+
+        for (int i = 0; i < results.size(); i++) {
+            ServiceProvider sp = results.get(i);
+            data[i] = new Object[]{
+                sp.getId(),
+                sp.getName(),
+                sp.getServiceType(),
+                String.format("₹%.2f", sp.getHourlyRate()),
+                sp.getContactNo(),
+                sp.getEmail(),
+                sp.getAddress().length() > 30 ? sp.getAddress().substring(0, 30) + "..." : sp.getAddress()
+            };
+        }
+
+        JTable resultsTable = new JTable(data, columnNames) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        // Customize table appearance
+        resultsTable.setRowHeight(30);
+        resultsTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        resultsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        resultsTable.setAutoCreateRowSorter(true);
+
+        // Custom renderer for alternate row colors
+        resultsTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, 
+                                                         boolean isSelected, boolean hasFocus, 
+                                                         int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? new Color(240, 245, 250) : Color.WHITE);
+                }
+                
+                return c;
+            }
+        });
+
+        // Add details button column
+        resultsTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = resultsTable.getSelectedRow();
+                if (selectedRow >= 0) {
+                    int providerId = (int) resultsTable.getValueAt(selectedRow, 0);
+                    try {
+                        ServiceProvider sp = manager.searchServiceProvider(providerId);
+                        if (sp != null) {
+                            showProviderDetails(sp);
+                        }
+                    } catch (SQLException ex) {
+                        showErrorDialog("Error", "Failed to load provider details.");
+                    }
+                }
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(resultsTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        JLabel resultCountLabel = new JLabel(
+            String.format("Found %d service providers for '%s'", results.size(), searchTerm),
+            SwingConstants.CENTER
+        );
+        resultCountLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        resultCountLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(resultCountLabel, BorderLayout.NORTH);
+        contentPanel.add(scrollPane, BorderLayout.CENTER);
+
+        resultsDialog.add(contentPanel);
+        resultsDialog.setVisible(true);
     }
 
     private void addServiceProvider() {
@@ -504,176 +841,6 @@ public class Sahayak extends JFrame {
                 showErrorDialog("Invalid Input", "Please enter a valid numeric ID.");
             }
         }
-    }
-
-    private void showProviderDetails(ServiceProvider sp) {
-        JPanel detailsPanel = new JPanel(new BorderLayout(10, 10));
-        detailsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Header with icon and name
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setOpaque(false);
-        
-        JLabel nameLabel = new JLabel(sp.getName(), SwingConstants.CENTER);
-        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        nameLabel.setForeground(new Color(33, 47, 61));
-        headerPanel.add(nameLabel, BorderLayout.CENTER);
-        
-        detailsPanel.add(headerPanel, BorderLayout.NORTH);
-
-        // Details in a formatted panel
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 220)),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        infoPanel.setBackground(new Color(240, 245, 250));
-
-        addDetailRow(infoPanel, "Adhaar ID:", String.valueOf(sp.getId()));
-        addDetailRow(infoPanel, "Service Type:", sp.getServiceType());
-        addDetailRow(infoPanel, "Hourly Rate:", String.format("₹%.2f", sp.getHourlyRate()));
-        addDetailRow(infoPanel, "Contact:", String.valueOf(sp.getContactNo()));
-        addDetailRow(infoPanel, "Email:", sp.getEmail());
-        addDetailRow(infoPanel, "Address:", sp.getAddress());
-        addDetailRow(infoPanel, "Skills:", sp.getSkills());
-
-        detailsPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
-
-        JOptionPane.showMessageDialog(this, detailsPanel, 
-            "Service Provider Details", JOptionPane.PLAIN_MESSAGE);
-    }
-
-    private void addDetailRow(JPanel panel, String label, String value) {
-        JPanel rowPanel = new JPanel(new BorderLayout());
-        rowPanel.setOpaque(false);
-        rowPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
-        JLabel labelComp = new JLabel(label);
-        labelComp.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        labelComp.setForeground(new Color(70, 70, 70));
-        labelComp.setPreferredSize(new Dimension(120, 20));
-
-        JTextArea valueComp = new JTextArea(value);
-        valueComp.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        valueComp.setEditable(false);
-        valueComp.setOpaque(false);
-        valueComp.setLineWrap(true);
-        valueComp.setWrapStyleWord(true);
-
-        rowPanel.add(labelComp, BorderLayout.WEST);
-        rowPanel.add(valueComp, BorderLayout.CENTER);
-        panel.add(rowPanel);
-    }
-
-    private void searchByServiceType() {
-        String serviceType = JOptionPane.showInputDialog(this, 
-            "Enter service type to search (e.g., Plumber, Electrician):", 
-            "Search by Service Type", 
-            JOptionPane.QUESTION_MESSAGE);
-            
-        if (serviceType != null && !serviceType.trim().isEmpty()) {
-            try {
-                List<ServiceProvider> results = manager.searchByServiceType(serviceType);
-                if (!results.isEmpty()) {
-                    showSearchResults(results, serviceType);
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "No service providers found for: " + serviceType, 
-                        "Search Results", 
-                        JOptionPane.INFORMATION_MESSAGE);
-                }
-            } catch (SQLException ex) {
-                showErrorDialog("Database Error", "Failed to search: " + ex.getMessage());
-            }
-        }
-    }
-
-    private void showSearchResults(List<ServiceProvider> results, String searchTerm) {
-        JDialog resultsDialog = new JDialog(this, "Search Results for: " + searchTerm, true);
-        resultsDialog.setSize(1200, 600);
-        resultsDialog.setLocationRelativeTo(this);
-
-        // Create table model
-        String[] columnNames = {"ID", "Name", "Service Type", "Hourly Rate", "Contact", "Email", "Location"};
-        Object[][] data = new Object[results.size()][columnNames.length];
-
-        for (int i = 0; i < results.size(); i++) {
-            ServiceProvider sp = results.get(i);
-            data[i] = new Object[]{
-                sp.getId(),
-                sp.getName(),
-                sp.getServiceType(),
-                String.format("₹%.2f", sp.getHourlyRate()),
-                sp.getContactNo(),
-                sp.getEmail(),
-                sp.getAddress().length() > 30 ? sp.getAddress().substring(0, 30) + "..." : sp.getAddress()
-            };
-        }
-
-        JTable resultsTable = new JTable(data, columnNames) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        // Customize table appearance
-        resultsTable.setRowHeight(30);
-        resultsTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        resultsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        resultsTable.setAutoCreateRowSorter(true);
-
-        // Custom renderer for alternate row colors
-        resultsTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, 
-                                                         boolean isSelected, boolean hasFocus, 
-                                                         int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? new Color(240, 245, 250) : Color.WHITE);
-                }
-                
-                return c;
-            }
-        });
-
-        // Add details button column
-        resultsTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = resultsTable.getSelectedRow();
-                if (selectedRow >= 0) {
-                    int providerId = (int) resultsTable.getValueAt(selectedRow, 0);
-                    try {
-                        ServiceProvider sp = manager.searchServiceProvider(providerId);
-                        if (sp != null) {
-                            showProviderDetails(sp);
-                        }
-                    } catch (SQLException ex) {
-                        showErrorDialog("Error", "Failed to load provider details.");
-                    }
-                }
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-
-        JLabel resultCountLabel = new JLabel(
-            String.format("Found %d service providers for '%s'", results.size(), searchTerm),
-            SwingConstants.CENTER
-        );
-        resultCountLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        resultCountLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.add(resultCountLabel, BorderLayout.NORTH);
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
-
-        resultsDialog.add(contentPanel);
-        resultsDialog.setVisible(true);
     }
 
     private void deleteServiceProvider() {
